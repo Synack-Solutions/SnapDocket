@@ -61,7 +61,11 @@ export class JobCompletionAgent implements Agent {
     if (error) return { success: false, processed: 0, errors: [error.message] };
 
     for (const job of jobs ?? []) {
-      const customer = job.customers as { email: string | null; name: string } | null;
+      const customersRaw = job.customers as
+        | { email: string | null; name: string }[]
+        | { email: string | null; name: string }
+        | null;
+      const customer = Array.isArray(customersRaw) ? (customersRaw[0] ?? null) : customersRaw;
       if (!customer?.email) continue;
 
       const photoPaths = (job.job_photos as { storage_path: string }[] | null) ?? [];

@@ -2,7 +2,7 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge, statusToBadgeVariant } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { formatCurrency, formatDate, formatRelativeDate } from "@/lib/utils";
+import { formatCurrency, formatRelativeDate } from "@/lib/utils";
 import Link from "next/link";
 import type { Metadata } from "next";
 

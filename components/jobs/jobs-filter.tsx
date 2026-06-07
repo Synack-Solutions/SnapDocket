@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { DataTable } from "@/components/ui/data-table";
 import { Badge, statusToBadgeVariant } from "@/components/ui/badge";
-import { formatDate, formatRelativeDate } from "@/lib/utils";
+import { formatRelativeDate } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 import type { Job } from "@/types";
 
