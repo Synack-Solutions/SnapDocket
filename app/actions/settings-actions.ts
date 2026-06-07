@@ -3,6 +3,20 @@
 import { createServerSupabaseClient, createServiceRoleClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 
+function normalizeServicesTableError(error: { code?: string; message?: string } | null): string {
+  if (!error) return "Unknown services error";
+
+  const missingTable =
+    error.code === "PGRST205" ||
+    error.message?.includes("Could not find the table 'public.services' in the schema cache");
+
+  if (missingTable) {
+    return "Services is not initialized for this environment yet. Apply migration 003_services_and_profile_trigger.sql to your Supabase database, then retry.";
+  }
+
+  return error.message ?? "Unknown services error";
+}
+
 /**
  * Returns the tenant_id for the authenticated user.
  * If no profile exists yet (e.g. user signed up before the DB trigger was added),
@@ -67,7 +81,7 @@ export async function upsertService(service: {
     },
     { onConflict: "id" }
   );
-  if (error) throw new Error(error.message);
+  if (error) throw new Error(normalizeServicesTableError(error));
 
   revalidatePath("/services");
   revalidatePath("/jobs/quick");
@@ -79,7 +93,7 @@ export async function deleteService(serviceId: string) {
   await getTenantId();
 
   const { error } = await supabase.from("services").delete().eq("id", serviceId);
-  if (error) throw new Error(error.message);
+  if (error) throw new Error(normalizeServicesTableError(error));
 
   revalidatePath("/services");
   revalidatePath("/jobs/quick");

@@ -5,6 +5,14 @@ import type { ServiceOption } from "@/components/jobs/service-picker";
 
 export const metadata: Metadata = { title: "Services" };
 
+function isServicesTableMissing(error: { code?: string; message?: string } | null): boolean {
+  return Boolean(
+    error &&
+    (error.code === "PGRST205" ||
+      error.message?.includes("Could not find the table 'public.services' in the schema cache"))
+  );
+}
+
 export default async function ServicesPage() {
   const supabase = await createServerSupabaseClient();
   const {
@@ -18,14 +26,21 @@ export default async function ServicesPage() {
     .maybeSingle();
 
   let services: ServiceOption[] = [];
+  let servicesUnavailable = false;
   if (profile?.tenant_id) {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("services")
       .select("id, label, description, unit_price, category")
       .eq("tenant_id", profile.tenant_id)
       .eq("is_active", true)
       .order("sort_order")
       .order("created_at");
+
+    if (isServicesTableMissing(error)) {
+      servicesUnavailable = true;
+    } else if (error) {
+      throw new Error(error.message);
+    }
 
     services = (data ?? []).map((s) => ({
       id: s.id,
@@ -43,6 +58,13 @@ export default async function ServicesPage() {
         <p className="text-sm text-muted-foreground">
           Define your service catalogue. Services appear in Quick Job and become invoice line items.
         </p>
+        {servicesUnavailable && (
+          <p className="mt-2 rounded border border-warning/40 bg-warning/10 px-3 py-2 text-sm text-warning-foreground">
+            Services table is not initialized in this environment. Apply migration
+            <span className="font-medium"> 003_services_and_profile_trigger.sql</span> in Supabase,
+            then refresh this page.
+          </p>
+        )}
       </div>
       <ServicesForm initial={services} />
     </div>

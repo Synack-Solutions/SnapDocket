@@ -141,6 +141,9 @@ export function ServicesForm({ initial }: Props) {
             min={0}
             step={0.01}
             value={form.unitPrice}
+            onFocus={(e) => {
+              if (e.currentTarget.value === "0") e.currentTarget.select();
+            }}
             onChange={(e) => setForm((f) => ({ ...f, unitPrice: parseFloat(e.target.value) || 0 }))}
           />
           <Input
