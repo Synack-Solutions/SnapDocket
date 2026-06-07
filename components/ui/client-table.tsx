@@ -60,9 +60,11 @@ export function ClientTable<T extends object>({
                 {headerGroup.headers.map((header) => (
                   <th
                     key={header.id}
-                    className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-muted-foreground"
                     onClick={header.column.getToggleSortingHandler()}
-                    style={{ cursor: header.column.getCanSort() ? "pointer" : "default" }}
+                    className={cn(
+                      "px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-muted-foreground",
+                      header.column.getCanSort() ? "cursor-pointer" : "cursor-default"
+                    )}
                   >
                     {flexRender(header.column.columnDef.header, header.getContext())}
                     {header.column.getIsSorted() === "asc" && " ↑"}

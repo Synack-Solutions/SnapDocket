@@ -2,7 +2,7 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge, statusToBadgeVariant } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { formatCurrency, formatDate } from "@/lib/utils";
+import { formatCurrency, formatDate, formatRelativeDate } from "@/lib/utils";
 import Link from "next/link";
 import type { Metadata } from "next";
 
@@ -181,7 +181,7 @@ export default async function DashboardPage() {
                           {customer?.name && (
                             <p className="truncate text-xs text-muted-foreground">
                               {customer.name}
-                              {job.scheduled_at && ` · ${formatDate(job.scheduled_at)}`}
+                              {job.scheduled_at && ` · ${formatRelativeDate(job.scheduled_at)}`}
                             </p>
                           )}
                         </div>

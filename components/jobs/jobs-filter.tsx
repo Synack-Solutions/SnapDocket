@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { DataTable } from "@/components/ui/data-table";
 import { Badge, statusToBadgeVariant } from "@/components/ui/badge";
-import { formatDate } from "@/lib/utils";
+import { formatDate, formatRelativeDate } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 import type { Job } from "@/types";
 
@@ -104,7 +104,25 @@ export function JobsFilter({ data }: Props) {
             key: "scheduled_at",
             header: "Scheduled",
             className: "hidden lg:table-cell",
-            cell: (row) => (row.scheduled_at ? formatDate(row.scheduled_at) : "—"),
+            cell: (row) => {
+              if (!row.scheduled_at) return "—";
+              const rel = formatRelativeDate(row.scheduled_at);
+              const isToday = rel === "Today";
+              const isTomorrow = rel === "Tomorrow";
+              return (
+                <span
+                  className={
+                    isToday
+                      ? "font-semibold text-accent"
+                      : isTomorrow
+                        ? "font-medium text-foreground"
+                        : undefined
+                  }
+                >
+                  {rel}
+                </span>
+              );
+            },
           },
         ]}
         rowHref="/jobs"

@@ -36,7 +36,7 @@ export default async function JobDetailPage({ params }: Props) {
 
   const tenantId = profile?.tenant_id as string | undefined;
 
-  const [{ data: job }, { data: photoRows }] = await Promise.all([
+  const [{ data: job }, { data: photoRows }, { data: linkedInvoice }] = await Promise.all([
     supabase
       .from("jobs")
       .select("*, customers(*), assigned_profile:profiles!assigned_to(full_name)")
@@ -49,6 +49,12 @@ export default async function JobDetailPage({ params }: Props) {
           .eq("job_id", id)
           .order("taken_at", { ascending: false })
       : Promise.resolve({ data: [] }),
+    supabase
+      .from("invoices")
+      .select("id, invoice_number, status")
+      .eq("job_id", id)
+      .limit(1)
+      .maybeSingle(),
   ]);
 
   if (!job) notFound();
@@ -87,9 +93,11 @@ export default async function JobDetailPage({ params }: Props) {
               </Button>
             </a>
           )}
-          <Link href={`/invoices/create?customerId=${job.customer_id}&jobId=${id}`}>
-            <Button size="sm">Create Invoice</Button>
-          </Link>
+          {!linkedInvoice && (
+            <Link href={`/invoices/create?customerId=${job.customer_id}&jobId=${id}`}>
+              <Button size="sm">Create Invoice</Button>
+            </Link>
+          )}
           <Link href={`/jobs/${id}/edit`}>
             <Button variant="outline" size="sm">
               Edit
@@ -98,6 +106,32 @@ export default async function JobDetailPage({ params }: Props) {
           <JobStatusActions jobId={id} status={job.status as JobStatus} />
         </div>
       </div>
+
+      {/* Invoice hint — show when job is complete/in-progress but no invoice exists yet */}
+      {job.status === "completed" && !linkedInvoice && (
+        <div className="flex items-center justify-between rounded-lg border border-accent/30 bg-accent/5 px-4 py-3 text-sm">
+          <span className="text-foreground">
+            Job complete — <span className="text-muted-foreground">no invoice created yet.</span>
+          </span>
+          <Link
+            href={`/invoices/create?customerId=${job.customer_id}&jobId=${id}`}
+            className="shrink-0 rounded-md bg-accent px-3 py-1.5 text-xs font-medium text-white hover:bg-accent/90"
+          >
+            Create Invoice →
+          </Link>
+        </div>
+      )}
+      {linkedInvoice && (
+        <div className="flex items-center justify-between rounded-lg border border-border bg-muted/30 px-4 py-3 text-sm">
+          <span className="text-muted-foreground">Invoice:</span>
+          <Link href={`/invoices/${linkedInvoice.id}`} className="font-medium hover:underline">
+            {linkedInvoice.invoice_number}
+            <Badge variant={statusToBadgeVariant(linkedInvoice.status)} className="ml-2">
+              {linkedInvoice.status}
+            </Badge>
+          </Link>
+        </div>
+      )}
 
       <div className="grid gap-6 md:grid-cols-2">
         <Card>

@@ -27,10 +27,7 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning className={inter.variable}>
-      <body
-        className="bg-background text-foreground antialiased"
-        style={{ fontFamily: "var(--font-sans)" }}
-      >
+      <body className="bg-background font-sans text-foreground antialiased">
         <Providers>{children}</Providers>
         {/* PWA service worker registration */}
         <script
