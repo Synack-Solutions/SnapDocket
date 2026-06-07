@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { inviteTeamMember, updateMemberRole, removeMember } from "@/app/actions/team-actions";
+import { approveAccessRequest, rejectAccessRequest } from "@/app/actions/access-request-actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { Profile } from "@/types";
@@ -23,13 +24,22 @@ const ROLE_BADGE: Record<string, string> = {
 
 interface Props {
   members: Pick<Profile, "id" | "email" | "full_name" | "role" | "is_active">[];
+  requests: Array<{
+    id: string;
+    email: string;
+    full_name: string | null;
+    message: string | null;
+    requested_role: InviteRole;
+    requested_at: string;
+  }>;
   currentUserId: string;
   canManage: boolean;
 }
 
-export function TeamManager({ members, currentUserId, canManage }: Props) {
+export function TeamManager({ members, requests, currentUserId, canManage }: Props) {
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<InviteRole>("technician");
+  const [requestRoles, setRequestRoles] = useState<Record<string, InviteRole>>({});
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -72,8 +82,100 @@ export function TeamManager({ members, currentUserId, canManage }: Props) {
     });
   };
 
+  const handleApproveRequest = (requestId: string, defaultRole: InviteRole) => {
+    const selectedRole = requestRoles[requestId] ?? defaultRole;
+    setError(null);
+    setSuccess(null);
+    startTransition(async () => {
+      try {
+        await approveAccessRequest(requestId, selectedRole);
+        setSuccess("Access request approved and invite sent");
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Failed to approve request");
+      }
+    });
+  };
+
+  const handleRejectRequest = (requestId: string) => {
+    setError(null);
+    setSuccess(null);
+    startTransition(async () => {
+      try {
+        await rejectAccessRequest(requestId);
+        setSuccess("Access request rejected");
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Failed to reject request");
+      }
+    });
+  };
+
   return (
     <div className="space-y-6">
+      {canManage && (
+        <div className="rounded-lg border border-border bg-white p-4">
+          <h3 className="mb-3 text-sm font-semibold text-foreground">Access requests</h3>
+          {requests.length === 0 ? (
+            <p className="text-xs text-muted-foreground">No pending access requests.</p>
+          ) : (
+            <ul className="divide-y divide-border rounded-md border border-border">
+              {requests.map((r) => (
+                <li
+                  key={r.id}
+                  className="flex flex-col gap-2 p-3 sm:flex-row sm:items-center sm:gap-3"
+                >
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium text-foreground">
+                      {r.full_name ?? r.email}
+                    </p>
+                    {r.full_name && (
+                      <p className="truncate text-xs text-muted-foreground">{r.email}</p>
+                    )}
+                    {r.message && <p className="mt-1 text-xs text-muted-foreground">{r.message}</p>}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <select
+                      value={requestRoles[r.id] ?? r.requested_role}
+                      onChange={(e) =>
+                        setRequestRoles((prev) => ({
+                          ...prev,
+                          [r.id]: e.target.value as InviteRole,
+                        }))
+                      }
+                      className="h-8 rounded border border-border bg-white px-2 text-xs focus:outline-none focus:ring-2 focus:ring-accent"
+                      aria-label="Role to grant"
+                    >
+                      {ROLES.map((roleOption) => (
+                        <option key={roleOption.value} value={roleOption.value}>
+                          {roleOption.label}
+                        </option>
+                      ))}
+                    </select>
+                    <Button
+                      size="sm"
+                      onClick={() => handleApproveRequest(r.id, r.requested_role)}
+                      loading={isPending}
+                    >
+                      Approve
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleRejectRequest(r.id)}
+                      disabled={isPending}
+                    >
+                      Reject
+                    </Button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+          <p className="mt-2 text-xs text-muted-foreground">
+            Approve sends an invite email and provisions the user in your workspace.
+          </p>
+        </div>
+      )}
+
       {/* Member list */}
       <ul className="divide-y divide-border rounded-lg border border-border bg-white">
         {members.map((m) => (

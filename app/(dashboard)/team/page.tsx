@@ -5,6 +5,15 @@ import type { Profile } from "@/types";
 
 export const metadata: Metadata = { title: "Team" };
 
+type AccessRequest = {
+  id: string;
+  email: string;
+  full_name: string | null;
+  message: string | null;
+  requested_role: "admin" | "technician" | "viewer";
+  requested_at: string;
+};
+
 export default async function TeamPage() {
   const supabase = await createServerSupabaseClient();
   const {
@@ -21,6 +30,7 @@ export default async function TeamPage() {
   const canManage = ["owner", "admin"].includes(profile?.role ?? "");
 
   let members: Pick<Profile, "id" | "email" | "full_name" | "role" | "is_active">[] = [];
+  let requests: AccessRequest[] = [];
   if (tenantId) {
     const { data } = await supabase
       .from("profiles")
@@ -30,6 +40,16 @@ export default async function TeamPage() {
       .order("role")
       .order("full_name");
     members = (data ?? []) as typeof members;
+
+    if (canManage) {
+      const { data: reqRows } = await supabase
+        .from("access_requests")
+        .select("id, email, full_name, message, requested_role, requested_at")
+        .eq("tenant_id", tenantId)
+        .eq("status", "pending")
+        .order("requested_at", { ascending: true });
+      requests = (reqRows ?? []) as AccessRequest[];
+    }
   }
 
   return (
@@ -40,7 +60,12 @@ export default async function TeamPage() {
           Manage staff access. Invited members receive an email to set up their account.
         </p>
       </div>
-      <TeamManager members={members} currentUserId={user!.id} canManage={canManage} />
+      <TeamManager
+        members={members}
+        requests={requests}
+        currentUserId={user!.id}
+        canManage={canManage}
+      />
     </div>
   );
 }
