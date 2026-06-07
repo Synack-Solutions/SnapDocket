@@ -8,7 +8,7 @@ import { useTenant } from "@/lib/hooks/use-tenant";
 import { ServicePicker, type ServiceOption } from "@/components/jobs/service-picker";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, cn } from "@/lib/utils";
 import type { Customer } from "@/types";
 
 interface QuickJobFormProps {
@@ -32,6 +32,8 @@ export function QuickJobForm({ services, customers }: QuickJobFormProps) {
   const [selectedServices, setSelectedServices] = useState<string[]>([]);
   const [siteAddress, setSiteAddress] = useState("");
   const [notes, setNotes] = useState("");
+  const [startMode, setStartMode] = useState<"now" | "schedule">("now");
+  const [scheduledAt, setScheduledAt] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [lastJobHint, setLastJobHint] = useState<string | null>(null);
 
@@ -102,11 +104,12 @@ export function QuickJobForm({ services, customers }: QuickJobFormProps) {
           tenant_id: tenantId,
           customer_id: customerId,
           title,
-          status: "in_progress",
+          status: startMode === "now" ? "in_progress" : "scheduled",
           priority: "medium",
           site_address: siteAddress || null,
           notes: notes || null,
-          started_at: new Date().toISOString(),
+          started_at: startMode === "now" ? new Date().toISOString() : null,
+          scheduled_at: startMode === "schedule" && scheduledAt ? scheduledAt : null,
         },
         successNotification: false,
       });
@@ -224,6 +227,46 @@ export function QuickJobForm({ services, customers }: QuickJobFormProps) {
       {/* Optional fields */}
       {customerId && (
         <div className="space-y-3">
+          {/* Start now vs schedule */}
+          <div>
+            <label className="mb-1.5 block text-sm font-medium">When?</label>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setStartMode("now")}
+                className={cn(
+                  "flex-1 rounded-lg border py-2.5 text-sm font-medium transition-colors",
+                  startMode === "now"
+                    ? "border-primary bg-primary/10 text-primary"
+                    : "border-border bg-background text-muted-foreground hover:bg-muted"
+                )}
+              >
+                ⚡ Start now
+              </button>
+              <button
+                type="button"
+                onClick={() => setStartMode("schedule")}
+                className={cn(
+                  "flex-1 rounded-lg border py-2.5 text-sm font-medium transition-colors",
+                  startMode === "schedule"
+                    ? "border-primary bg-primary/10 text-primary"
+                    : "border-border bg-background text-muted-foreground hover:bg-muted"
+                )}
+              >
+                📅 Schedule
+              </button>
+            </div>
+            {startMode === "schedule" && (
+              <input
+                type="datetime-local"
+                value={scheduledAt}
+                onChange={(e) => setScheduledAt(e.target.value)}
+                aria-label="Scheduled date and time"
+                className="mt-2 h-10 w-full rounded border border-border bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+              />
+            )}
+          </div>
+
           <Input
             label="Site / Vehicle"
             placeholder="Rego, bay number, or address…"
@@ -247,11 +290,23 @@ export function QuickJobForm({ services, customers }: QuickJobFormProps) {
         type="button"
         size="lg"
         className="w-full"
-        disabled={!customerId || selectedServices.length === 0 || isSubmitting || !tenantId}
+        disabled={
+          !customerId ||
+          selectedServices.length === 0 ||
+          isSubmitting ||
+          !tenantId ||
+          (startMode === "schedule" && !scheduledAt)
+        }
         loading={isSubmitting}
         onClick={handleSubmit}
       >
-        {isSubmitting ? "Starting…" : `Start Job${customerName ? ` — ${customerName}` : ""}`}
+        {isSubmitting
+          ? startMode === "schedule"
+            ? "Scheduling…"
+            : "Starting…"
+          : startMode === "schedule"
+            ? `Schedule Job${customerName ? ` — ${customerName}` : ""}`
+            : `Start Job${customerName ? ` — ${customerName}` : ""}`}
       </Button>
     </div>
   );

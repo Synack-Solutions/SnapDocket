@@ -36,6 +36,12 @@ export default async function InvoiceDetailPage({ params }: Props) {
   const canEdit = invoice.status === "draft";
   const canRecordPayment = !["paid", "void"].includes(invoice.status);
 
+  const today = new Date().toISOString().split("T")[0];
+  const isOverdue = invoice.due_date < today && !["paid", "void", "draft"].includes(invoice.status);
+  const daysOverdue = isOverdue
+    ? Math.floor((Date.now() - new Date(invoice.due_date).getTime()) / 86_400_000)
+    : 0;
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -45,7 +51,9 @@ export default async function InvoiceDetailPage({ params }: Props) {
           </Link>
           <div className="mt-1 flex flex-wrap items-center gap-2">
             <h1 className="text-xl font-bold sm:text-2xl">{invoice.invoice_number}</h1>
-            <Badge variant={statusToBadgeVariant(invoice.status)}>{invoice.status}</Badge>
+            <Badge variant={isOverdue ? "destructive" : statusToBadgeVariant(invoice.status)}>
+              {isOverdue ? "overdue" : invoice.status}
+            </Badge>
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -88,6 +96,16 @@ export default async function InvoiceDetailPage({ params }: Props) {
         </div>
       </div>
 
+      {isOverdue && (
+        <div className="rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
+          <span className="font-semibold">
+            ⚠️ {daysOverdue} day{daysOverdue !== 1 ? "s" : ""} overdue
+          </span>
+          {" — "}
+          <span>{formatCurrency(Number(invoice.amount_due))} still outstanding.</span>
+        </div>
+      )}
+
       <div className="grid gap-6 md:grid-cols-2">
         <Card>
           <CardHeader>
@@ -95,8 +113,26 @@ export default async function InvoiceDetailPage({ params }: Props) {
           </CardHeader>
           <CardContent className="text-sm space-y-1">
             <p className="font-semibold">{(invoice.customers as { name: string })?.name}</p>
-            <p>{(invoice.customers as { email?: string })?.email}</p>
-            <p>{(invoice.customers as { phone?: string })?.phone}</p>
+            {(invoice.customers as { email?: string })?.email && (
+              <p>
+                <a
+                  href={`mailto:${(invoice.customers as { email: string }).email}`}
+                  className="hover:underline"
+                >
+                  {(invoice.customers as { email: string }).email}
+                </a>
+              </p>
+            )}
+            {(invoice.customers as { phone?: string })?.phone && (
+              <p>
+                <a
+                  href={`tel:${(invoice.customers as { phone: string }).phone}`}
+                  className="text-accent hover:underline"
+                >
+                  {(invoice.customers as { phone: string }).phone}
+                </a>
+              </p>
+            )}
           </CardContent>
         </Card>
 

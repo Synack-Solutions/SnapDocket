@@ -26,13 +26,13 @@ export default async function CustomerDetailPage({ params }: Props) {
     supabase.from("customers").select("*").eq("id", id).single(),
     supabase
       .from("jobs")
-      .select("id, title, status, created_at")
+      .select("id, title, status, scheduled_at, created_at")
       .eq("customer_id", id)
       .order("created_at", { ascending: false })
       .limit(10),
     supabase
       .from("invoices")
-      .select("id, invoice_number, total, status, issued_date")
+      .select("id, invoice_number, total, amount_due, amount_paid, status, issued_date, due_date")
       .eq("customer_id", id)
       .order("created_at", { ascending: false })
       .limit(10),
@@ -74,6 +74,16 @@ export default async function CustomerDetailPage({ params }: Props) {
   }
   const topServices = [...serviceFreq.values()].sort((a, b) => b.count - a.count).slice(0, 8);
 
+  const totalSpend =
+    invoicesResult.data
+      ?.filter((i) => !["void", "draft"].includes(i.status))
+      .reduce((s, i) => s + Number(i.amount_paid ?? 0), 0) ?? 0;
+
+  const openBalance =
+    invoicesResult.data
+      ?.filter((i) => !["paid", "void", "draft"].includes(i.status))
+      .reduce((s, i) => s + Number(i.amount_due ?? 0), 0) ?? 0;
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -108,27 +118,56 @@ export default async function CustomerDetailPage({ params }: Props) {
           <CardContent className="space-y-2 text-sm">
             {customer.email && (
               <p>
-                <span className="text-muted-foreground">Email:</span> {customer.email}
+                <span className="text-muted-foreground">Email:</span>{" "}
+                <a href={`mailto:${customer.email}`} className="hover:underline">
+                  {customer.email}
+                </a>
               </p>
             )}
             {customer.phone && (
               <p>
-                <span className="text-muted-foreground">Phone:</span> {customer.phone}
+                <span className="text-muted-foreground">Phone:</span>{" "}
+                <a
+                  href={`tel:${customer.phone}`}
+                  className="font-medium text-accent hover:underline"
+                >
+                  {customer.phone}
+                </a>
               </p>
             )}
             {customer.address_line1 && (
               <p>
                 <span className="text-muted-foreground">Address:</span>{" "}
-                {[
-                  customer.address_line1,
-                  customer.address_line2,
-                  customer.city,
-                  customer.state,
-                  customer.postcode,
-                ]
-                  .filter(Boolean)
-                  .join(", ")}
+                <a
+                  href={`https://maps.google.com/?q=${encodeURIComponent(
+                    [
+                      customer.address_line1,
+                      customer.address_line2,
+                      customer.city,
+                      customer.state,
+                      customer.postcode,
+                    ]
+                      .filter(Boolean)
+                      .join(", ")
+                  )}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:underline"
+                >
+                  {[
+                    customer.address_line1,
+                    customer.address_line2,
+                    customer.city,
+                    customer.state,
+                    customer.postcode,
+                  ]
+                    .filter(Boolean)
+                    .join(", ")}
+                </a>
               </p>
+            )}
+            {customer.notes && (
+              <p className="pt-1 text-muted-foreground italic">{customer.notes}</p>
             )}
             <div className="pt-1">
               <Badge variant={statusToBadgeVariant(customer.status)}>{customer.status}</Badge>
@@ -136,21 +175,66 @@ export default async function CustomerDetailPage({ params }: Props) {
           </CardContent>
         </Card>
 
+        {/* Spend summary */}
         <Card>
           <CardHeader>
+            <CardTitle>Account Summary</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2 text-sm">
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">Total collected</span>
+              <span className="font-semibold tabular-nums">{formatCurrency(totalSpend)}</span>
+            </div>
+            {openBalance > 0 && (
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground">Outstanding balance</span>
+                <span className="font-semibold tabular-nums text-destructive">
+                  {formatCurrency(openBalance)}
+                </span>
+              </div>
+            )}
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">Total jobs</span>
+              <span className="tabular-nums">{jobsResult.data?.length ?? 0}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">Total invoices</span>
+              <span className="tabular-nums">{invoicesResult.data?.length ?? 0}</span>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex-row items-center justify-between pb-3">
             <CardTitle>Recent Jobs</CardTitle>
+            <Link
+              href={`/jobs/quick?customerId=${id}`}
+              className="text-xs text-accent hover:underline"
+            >
+              Quick Job →
+            </Link>
           </CardHeader>
           <CardContent>
             {jobsResult.data?.length === 0 ? (
               <p className="text-sm text-muted-foreground">No jobs yet.</p>
             ) : (
-              <ul className="space-y-2">
+              <ul className="divide-y divide-border">
                 {jobsResult.data?.map((job) => (
-                  <li key={job.id} className="flex items-center justify-between text-sm">
-                    <Link href={`/jobs/${job.id}`} className="hover:underline">
-                      {job.title}
-                    </Link>
-                    <Badge variant={statusToBadgeVariant(job.status)}>
+                  <li key={job.id} className="flex items-center justify-between gap-3 py-2 text-sm">
+                    <div className="min-w-0">
+                      <Link
+                        href={`/jobs/${job.id}`}
+                        className="block truncate hover:underline font-medium"
+                      >
+                        {job.title}
+                      </Link>
+                      {job.scheduled_at && (
+                        <p className="text-xs text-muted-foreground">
+                          {formatDate(job.scheduled_at)}
+                        </p>
+                      )}
+                    </div>
+                    <Badge variant={statusToBadgeVariant(job.status)} className="shrink-0">
                       {job.status.replace("_", " ")}
                     </Badge>
                   </li>
@@ -189,8 +273,14 @@ export default async function CustomerDetailPage({ params }: Props) {
         )}
 
         <Card className="md:col-span-2">
-          <CardHeader>
+          <CardHeader className="flex-row items-center justify-between pb-3">
             <CardTitle>Invoice History</CardTitle>
+            <Link
+              href={`/invoices/create?customerId=${id}`}
+              className="text-xs text-accent hover:underline"
+            >
+              New Invoice →
+            </Link>
           </CardHeader>
           <CardContent>
             {invoicesResult.data?.length === 0 ? (
@@ -206,7 +296,16 @@ export default async function CustomerDetailPage({ params }: Props) {
                       <p className="text-xs text-muted-foreground">{formatDate(inv.issued_date)}</p>
                     </div>
                     <div className="flex items-center gap-2 text-right">
-                      <span className="font-medium">{formatCurrency(Number(inv.total))}</span>
+                      <div>
+                        <p className="font-medium tabular-nums">
+                          {formatCurrency(Number(inv.total))}
+                        </p>
+                        {Number(inv.amount_due) > 0 && !["paid", "void"].includes(inv.status) && (
+                          <p className="text-xs text-destructive tabular-nums">
+                            {formatCurrency(Number(inv.amount_due))} due
+                          </p>
+                        )}
+                      </div>
                       <Badge variant={statusToBadgeVariant(inv.status)}>{inv.status}</Badge>
                     </div>
                   </li>
