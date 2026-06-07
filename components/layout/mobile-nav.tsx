@@ -69,10 +69,19 @@ export function MobileMenuDrawer() {
             onClick={() => setOpen(false)}
             aria-hidden="true"
           />
-          <nav className="absolute left-0 top-0 h-full w-64 bg-background p-4 shadow-xl">
+          <nav className="absolute left-0 top-0 h-full w-64 bg-primary p-4 shadow-xl">
             <div className="mb-6 flex items-center justify-between">
-              <span className="text-lg font-bold text-primary">SnapDocket</span>
-              <button onClick={() => setOpen(false)} aria-label="Close menu">
+              <span className="flex items-center gap-2 text-lg font-bold text-white">
+                <span className="flex h-6 w-6 items-center justify-center rounded bg-accent text-xs font-black text-white">
+                  S
+                </span>
+                SnapDocket
+              </span>
+              <button
+                onClick={() => setOpen(false)}
+                aria-label="Close menu"
+                className="text-white/60 hover:text-white"
+              >
                 ✕
               </button>
             </div>
@@ -86,7 +95,9 @@ export function MobileMenuDrawer() {
                     onClick={() => setOpen(false)}
                     className={cn(
                       "flex items-center gap-3 rounded px-3 py-2 text-sm font-medium",
-                      isActive ? "bg-primary text-primary-foreground" : "hover:bg-muted"
+                      isActive
+                        ? "bg-accent text-white"
+                        : "text-white/60 hover:bg-white/8 hover:text-white"
                     )}
                   >
                     <span aria-hidden="true">{item.icon}</span>
@@ -94,6 +105,21 @@ export function MobileMenuDrawer() {
                   </Link>
                 );
               })}
+              <div className="mt-2 border-t border-white/10 pt-2">
+                <Link
+                  href="/settings/services"
+                  onClick={() => setOpen(false)}
+                  className={cn(
+                    "flex items-center gap-3 rounded px-3 py-2 text-sm font-medium",
+                    pathname.startsWith("/settings")
+                      ? "bg-accent text-white"
+                      : "text-white/60 hover:bg-white/8 hover:text-white"
+                  )}
+                >
+                  <span aria-hidden="true">⚙️</span>
+                  Settings
+                </Link>
+              </div>
             </div>
           </nav>
         </div>

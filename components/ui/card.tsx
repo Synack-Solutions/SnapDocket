@@ -10,7 +10,7 @@ interface CardFooterProps extends React.HTMLAttributes<HTMLDivElement> {}
 export function Card({ className, ...props }: CardProps) {
   return (
     <div
-      className={cn("rounded-lg border border-border bg-background shadow-sm", className)}
+      className={cn("rounded-lg border border-border bg-white shadow-sm", className)}
       {...props}
     />
   );

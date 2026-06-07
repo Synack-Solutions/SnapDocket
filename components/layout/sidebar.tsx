@@ -98,9 +98,14 @@ export function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="hidden w-56 flex-shrink-0 flex-col border-r border-border bg-background md:flex">
-      <div className="flex h-14 items-center border-b border-border px-5">
-        <span className="text-base font-bold tracking-tight text-foreground">SnapDocket</span>
+    <aside className="hidden w-56 flex-shrink-0 flex-col bg-primary md:flex">
+      <div className="flex h-14 items-center border-b border-white/10 px-5">
+        <span className="flex items-center gap-2 text-base font-bold tracking-tight text-white">
+          <span className="flex h-6 w-6 items-center justify-center rounded bg-accent text-xs font-black text-white">
+            S
+          </span>
+          SnapDocket
+        </span>
       </div>
       <nav className="flex flex-1 flex-col gap-0.5 p-2" aria-label="Main navigation">
         {navItems.map((item) => {
@@ -114,8 +119,8 @@ export function Sidebar() {
               className={cn(
                 "flex items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium transition-colors",
                 isActive
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  ? "bg-accent text-white"
+                  : "text-white/60 hover:bg-white/8 hover:text-white"
               )}
               aria-current={isActive ? "page" : undefined}
             >
@@ -127,6 +132,34 @@ export function Sidebar() {
           );
         })}
       </nav>
+      <div className="border-t border-white/10 p-2">
+        <Link
+          href="/settings/services"
+          className={cn(
+            "flex items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+            pathname.startsWith("/settings")
+              ? "bg-accent text-white"
+              : "text-white/60 hover:bg-white/8 hover:text-white"
+          )}
+          aria-current={pathname.startsWith("/settings") ? "page" : undefined}
+        >
+          <span aria-hidden="true" className="flex-shrink-0">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+              className="h-4 w-4"
+            >
+              <path
+                fillRule="evenodd"
+                d="M7.84 1.804A1 1 0 0 1 8.82 1h2.36a1 1 0 0 1 .98.804l.331 1.652a6.993 6.993 0 0 1 1.929 1.115l1.598-.54a1 1 0 0 1 1.186.447l1.18 2.044a1 1 0 0 1-.205 1.251l-1.267 1.113a7.047 7.047 0 0 1 0 2.228l1.267 1.113a1 1 0 0 1 .205 1.251l-1.18 2.044a1 1 0 0 1-1.186.447l-1.598-.54a6.993 6.993 0 0 1-1.929 1.115l-.33 1.652a1 1 0 0 1-.98.804H8.82a1 1 0 0 1-.98-.804l-.331-1.652a6.993 6.993 0 0 1-1.929-1.115l-1.598.54a1 1 0 0 1-1.186-.447l-1.18-2.044a1 1 0 0 1 .205-1.251l1.267-1.114a7.05 7.05 0 0 1 0-2.227L1.821 7.773a1 1 0 0 1-.206-1.25l1.18-2.045a1 1 0 0 1 1.187-.447l1.598.54A6.992 6.992 0 0 1 7.51 3.456l.33-1.652ZM10 13a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"
+                clipRule="evenodd"
+              />
+            </svg>
+          </span>
+          Settings
+        </Link>
+      </div>
     </aside>
   );
 }
