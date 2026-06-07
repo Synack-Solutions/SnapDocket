@@ -1,7 +1,6 @@
 "use client";
 
 import { useRef, useState, useTransition } from "react";
-import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -105,7 +104,6 @@ export function PhotoUploader({ jobId, tenantId, onUploaded }: PhotoUploaderProp
     setError(null);
 
     startTransition(async () => {
-      const supabase = createClient();
       const uploaded: UploadedPhoto[] = [];
 
       for (let i = 0; i < files.length; i++) {
@@ -121,47 +119,31 @@ export function PhotoUploader({ jobId, tenantId, onUploaded }: PhotoUploaderProp
         }
 
         const photoId = crypto.randomUUID();
-        const storagePath = `${tenantId}/${jobId}/${photoId}.jpg`;
-
         setProgress(`Uploading ${i + 1}/${files.length}…`);
-        const { error: uploadError } = await supabase.storage
-          .from("job-photos")
-          .upload(storagePath, blob, { contentType: "image/jpeg", upsert: false });
 
-        if (uploadError) {
-          setError(`Upload failed: ${uploadError.message}`);
-          return;
-        }
+        const fd = new FormData();
+        fd.append("jobId", jobId);
+        fd.append("tenantId", tenantId);
+        fd.append("file", new File([blob], `${photoId}.jpg`, { type: "image/jpeg" }));
 
-        // Insert metadata row
-        const { data: photoRow, error: dbError } = await supabase
-          .from("job_photos")
-          .insert({
-            id: photoId,
-            job_id: jobId,
-            tenant_id: tenantId,
-            storage_path: storagePath,
-            file_name: file.name,
-          })
-          .select("id, storage_path, file_name")
-          .single();
-
-        if (dbError || !photoRow) {
-          setError(`DB error: ${dbError?.message}`);
-          return;
-        }
-
-        // Get a signed URL valid for 1 hour for immediate display
-        const { data: signed } = await supabase.storage
-          .from("job-photos")
-          .createSignedUrl(storagePath, 3600);
-
-        uploaded.push({
-          id: photoRow.id,
-          storage_path: photoRow.storage_path,
-          file_name: photoRow.file_name,
-          url: signed?.signedUrl ?? "",
+        const resp = await fetch("/api/jobs/photos", {
+          method: "POST",
+          body: fd,
         });
+
+        if (!resp.ok) {
+          const body = (await resp.json().catch(() => ({}))) as { error?: string };
+          setError(`Upload failed: ${body.error ?? `HTTP ${resp.status}`}`);
+          return;
+        }
+
+        const body = (await resp.json()) as { photo?: UploadedPhoto; error?: string };
+        if (!body.photo) {
+          setError(`Upload failed: ${body.error ?? "Invalid upload response"}`);
+          return;
+        }
+
+        uploaded.push(body.photo);
       }
 
       setProgress(null);
