@@ -19,6 +19,8 @@ interface DataTableProps<T> {
   /** Base path for row navigation, e.g. "/customers". Navigates to `${rowHref}/${row.id}`. */
   rowHref?: string;
   className?: string;
+  /** Optional per-row class override. */
+  rowClassName?: (row: T) => string | undefined;
 }
 
 export function DataTable<T extends { id?: string }>({
@@ -28,6 +30,7 @@ export function DataTable<T extends { id?: string }>({
   emptyMessage = "No records found.",
   rowHref,
   className,
+  rowClassName,
 }: DataTableProps<T>) {
   const router = useRouter();
   return (
@@ -80,7 +83,8 @@ export function DataTable<T extends { id?: string }>({
                 onClick={() => rowHref && row.id && router.push(`${rowHref}/${row.id}`)}
                 className={cn(
                   "border-b border-border transition-colors last:border-0",
-                  rowHref && "cursor-pointer hover:bg-muted/30"
+                  rowHref && "cursor-pointer hover:bg-muted/30",
+                  rowClassName?.(row)
                 )}
               >
                 {columns.map((col) => (

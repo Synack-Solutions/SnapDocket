@@ -1,5 +1,5 @@
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { JobsTable } from "@/components/ui/jobs-table";
+import { JobsFilter } from "@/components/jobs/jobs-filter";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import type { Metadata } from "next";
@@ -12,6 +12,7 @@ export default async function JobsPage() {
   const { data: jobs, error } = await supabase
     .from("jobs")
     .select("*, customers(name)")
+    .order("scheduled_at", { ascending: true, nullsFirst: false })
     .order("created_at", { ascending: false });
 
   if (error) throw error;
@@ -20,12 +21,19 @@ export default async function JobsPage() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold">Jobs</h1>
-        <Link href="/jobs/create">
-          <Button size="sm">+ New Job</Button>
-        </Link>
+        <div className="flex gap-2">
+          <Link href="/jobs/quick">
+            <Button size="sm">⚡ Quick</Button>
+          </Link>
+          <Link href="/jobs/create">
+            <Button size="sm" variant="outline">
+              + New Job
+            </Button>
+          </Link>
+        </div>
       </div>
 
-      <JobsTable data={(jobs ?? []) as (Job & { customers: { name: string } | null })[]} />
+      <JobsFilter data={(jobs ?? []) as (Job & { customers: { name: string } | null })[]} />
     </div>
   );
 }

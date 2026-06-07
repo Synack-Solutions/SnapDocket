@@ -77,7 +77,7 @@ function ServiceTile({
     <button
       type="button"
       role="checkbox"
-      aria-checked={selected}
+      aria-checked={selected ? ("true" as const) : ("false" as const)}
       onClick={onToggle}
       className={cn(
         "flex flex-col items-start gap-0.5 rounded-lg border p-3 text-left text-sm transition-colors",

@@ -80,6 +80,13 @@ export default async function JobDetailPage({ params }: Props) {
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
+          {(job.customers as { phone?: string | null })?.phone && (
+            <a href={`tel:${(job.customers as { phone: string }).phone}`}>
+              <Button size="sm" variant="outline">
+                📞 Call
+              </Button>
+            </a>
+          )}
           <Link href={`/invoices/create?customerId=${job.customer_id}&jobId=${id}`}>
             <Button size="sm">Create Invoice</Button>
           </Link>
@@ -100,10 +107,32 @@ export default async function JobDetailPage({ params }: Props) {
           <CardContent className="space-y-2 text-sm">
             <p>
               <span className="text-muted-foreground">Customer:</span>{" "}
-              <Link href={`/customers/${job.customer_id}`} className="hover:underline">
+              <Link href={`/customers/${job.customer_id}`} className="hover:underline font-medium">
                 {(job.customers as { name: string })?.name}
               </Link>
             </p>
+            {(job.customers as { phone?: string | null })?.phone && (
+              <p>
+                <span className="text-muted-foreground">Phone:</span>{" "}
+                <a
+                  href={`tel:${(job.customers as { phone: string }).phone}`}
+                  className="font-medium text-accent hover:underline"
+                >
+                  {(job.customers as { phone: string }).phone}
+                </a>
+              </p>
+            )}
+            {(job.customers as { email?: string | null })?.email && (
+              <p>
+                <span className="text-muted-foreground">Email:</span>{" "}
+                <a
+                  href={`mailto:${(job.customers as { email: string }).email}`}
+                  className="hover:underline truncate"
+                >
+                  {(job.customers as { email: string }).email}
+                </a>
+              </p>
+            )}
             <p>
               <span className="text-muted-foreground">Priority:</span>{" "}
               <Badge
@@ -126,7 +155,15 @@ export default async function JobDetailPage({ params }: Props) {
             )}
             {job.site_address && (
               <p>
-                <span className="text-muted-foreground">Site:</span> {job.site_address}
+                <span className="text-muted-foreground">Site:</span>{" "}
+                <a
+                  href={`https://maps.google.com/?q=${encodeURIComponent(job.site_address)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:underline"
+                >
+                  {job.site_address}
+                </a>
               </p>
             )}
             {(job.assigned_profile as { full_name?: string } | null)?.full_name && (

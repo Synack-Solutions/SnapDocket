@@ -34,7 +34,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
             error && "border-destructive focus-visible:ring-destructive",
             className
           )}
-          aria-invalid={!!error}
+          aria-invalid={error ? ("true" as const) : undefined}
           aria-describedby={error ? `${inputId}-error` : hint ? `${inputId}-hint` : undefined}
           {...props}
         />

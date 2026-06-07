@@ -176,8 +176,11 @@ export function QuickJobForm({ services, customers }: QuickJobFormProps) {
     <div className="space-y-5">
       {/* Customer selector */}
       <div>
-        <label className="mb-1 block text-sm font-semibold">Customer *</label>
+        <label htmlFor="quick-job-customer" className="mb-1 block text-sm font-semibold">
+          Customer *
+        </label>
         <select
+          id="quick-job-customer"
           value={customerId}
           onChange={(e) => setCustomerId(e.target.value)}
           className="h-12 w-full rounded-lg border border-border bg-background px-3 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
