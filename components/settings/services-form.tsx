@@ -16,6 +16,7 @@ const EMPTY_FORM: Omit<ServiceOption, "id"> = {
   description: "",
   unitPrice: 0,
   category: "core",
+  subtasks: [],
 };
 
 export function ServicesForm({ initial }: Props) {
@@ -32,6 +33,7 @@ export function ServicesForm({ initial }: Props) {
       description: s.description ?? "",
       unitPrice: s.unitPrice,
       category: s.category,
+      subtasks: s.subtasks ?? [],
     });
   };
 
@@ -152,6 +154,29 @@ export function ServicesForm({ initial }: Props) {
             onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
             placeholder="Short description"
           />
+          <div className="flex flex-col gap-1 sm:col-span-2">
+            <label htmlFor="service-subtasks" className="text-sm font-medium text-foreground">
+              Subtasks (optional)
+            </label>
+            <textarea
+              id="service-subtasks"
+              rows={4}
+              value={(form.subtasks ?? []).join("\n")}
+              onChange={(e) =>
+                setForm((f) => ({
+                  ...f,
+                  subtasks: e.target.value
+                    .split("\n")
+                    .map((line) => line.trim())
+                    .filter(Boolean),
+                }))
+              }
+              placeholder={
+                "One subtask per line, e.g.\nShut off mains\nDrain tank\nInstall new unit"
+              }
+              className="w-full rounded border border-border bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+            />
+          </div>
           <div className="flex flex-col gap-1">
             <label htmlFor="service-category" className="text-sm font-medium text-foreground">
               Category
@@ -212,6 +237,11 @@ function ServiceList({
             <p className="truncate text-sm font-medium text-foreground">{s.label}</p>
             {s.description && (
               <p className="truncate text-xs text-muted-foreground">{s.description}</p>
+            )}
+            {(s.subtasks?.length ?? 0) > 0 && (
+              <p className="truncate text-xs text-muted-foreground">
+                {s.subtasks!.length} subtask{s.subtasks!.length > 1 ? "s" : ""}
+              </p>
             )}
           </div>
           <span className="shrink-0 text-sm font-medium text-foreground">

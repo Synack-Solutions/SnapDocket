@@ -66,6 +66,7 @@ export async function upsertService(service: {
   description?: string;
   unitPrice: number;
   category: "core" | "addon";
+  subtasks?: string[];
 }) {
   const supabase = await createServerSupabaseClient();
   const tenantId = await getTenantId();
@@ -82,6 +83,29 @@ export async function upsertService(service: {
     { onConflict: "id" }
   );
   if (error) throw new Error(normalizeServicesTableError(error));
+
+  const cleanedSubtasks = Array.from(
+    new Set((service.subtasks ?? []).map((s) => s.trim()).filter(Boolean))
+  );
+
+  const { error: delSubtasksError } = await supabase
+    .from("service_subtasks")
+    .delete()
+    .eq("service_id", service.id)
+    .eq("tenant_id", tenantId);
+  if (delSubtasksError) throw new Error(normalizeServicesTableError(delSubtasksError));
+
+  if (cleanedSubtasks.length > 0) {
+    const { error: insertSubtasksError } = await supabase.from("service_subtasks").insert(
+      cleanedSubtasks.map((label, idx) => ({
+        service_id: service.id,
+        tenant_id: tenantId,
+        label,
+        sort_order: idx,
+      }))
+    );
+    if (insertSubtasksError) throw new Error(normalizeServicesTableError(insertSubtasksError));
+  }
 
   revalidatePath("/services");
   revalidatePath("/jobs/quick");

@@ -9,6 +9,7 @@ export interface ServiceOption {
   unitPrice: number;
   /** "core" shows first; "addon" shows in a secondary section */
   category: "core" | "addon";
+  subtasks?: string[];
 }
 
 interface ServicePickerProps {

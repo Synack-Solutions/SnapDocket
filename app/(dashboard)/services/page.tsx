@@ -30,7 +30,9 @@ export default async function ServicesPage() {
   if (profile?.tenant_id) {
     const { data, error } = await supabase
       .from("services")
-      .select("id, label, description, unit_price, category")
+      .select(
+        "id, label, description, unit_price, category, service_subtasks(label, sort_order, is_active)"
+      )
       .eq("tenant_id", profile.tenant_id)
       .eq("is_active", true)
       .order("sort_order")
@@ -48,6 +50,16 @@ export default async function ServicesPage() {
       description: s.description ?? undefined,
       unitPrice: Number(s.unit_price),
       category: s.category as "core" | "addon",
+      subtasks: (
+        (
+          s as {
+            service_subtasks?: Array<{ label: string; is_active?: boolean; sort_order?: number }>;
+          }
+        ).service_subtasks ?? []
+      )
+        .filter((st) => st.is_active !== false)
+        .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
+        .map((st) => st.label),
     }));
   }
 

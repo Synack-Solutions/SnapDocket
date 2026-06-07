@@ -4,6 +4,7 @@ import { Badge, statusToBadgeVariant } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { JobStatusActions } from "@/components/jobs/job-status-actions";
 import { JobPhotoGallery } from "@/components/jobs/job-photo-gallery";
+import { JobServiceChecklist } from "@/components/jobs/job-service-checklist";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { formatDate } from "@/lib/utils";
@@ -36,26 +37,36 @@ export default async function JobDetailPage({ params }: Props) {
 
   const tenantId = profile?.tenant_id as string | undefined;
 
-  const [{ data: job }, { data: photoRows }, { data: linkedInvoice }] = await Promise.all([
-    supabase
-      .from("jobs")
-      .select("*, customers(*), assigned_profile:profiles!assigned_to(full_name)")
-      .eq("id", id)
-      .single(),
-    tenantId
-      ? supabase
-          .from("job_photos")
-          .select("id, storage_path, file_name, caption, taken_at")
-          .eq("job_id", id)
-          .order("taken_at", { ascending: false })
-      : Promise.resolve({ data: [] }),
-    supabase
-      .from("invoices")
-      .select("id, invoice_number, status")
-      .eq("job_id", id)
-      .limit(1)
-      .maybeSingle(),
-  ]);
+  const [{ data: job }, { data: photoRows }, { data: linkedInvoice }, { data: checklistRows }] =
+    await Promise.all([
+      supabase
+        .from("jobs")
+        .select("*, customers(*), assigned_profile:profiles!assigned_to(full_name)")
+        .eq("id", id)
+        .single(),
+      tenantId
+        ? supabase
+            .from("job_photos")
+            .select("id, storage_path, file_name, caption, taken_at")
+            .eq("job_id", id)
+            .order("taken_at", { ascending: false })
+        : Promise.resolve({ data: [] }),
+      supabase
+        .from("invoices")
+        .select("id, invoice_number, status")
+        .eq("job_id", id)
+        .limit(1)
+        .maybeSingle(),
+      tenantId
+        ? supabase
+            .from("job_service_checks")
+            .select(
+              "id, service_label, is_completed, sort_order, job_service_subtask_checks(id, subtask_label, is_completed, sort_order)"
+            )
+            .eq("job_id", id)
+            .order("sort_order")
+        : Promise.resolve({ data: [] }),
+    ]);
 
   if (!job) notFound();
 
@@ -225,6 +236,30 @@ export default async function JobDetailPage({ params }: Props) {
           </Card>
         )}
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Service Checklist</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <JobServiceChecklist
+            items={
+              (checklistRows ?? []) as Array<{
+                id: string;
+                service_label: string;
+                is_completed: boolean;
+                sort_order: number;
+                job_service_subtask_checks?: Array<{
+                  id: string;
+                  subtask_label: string;
+                  is_completed: boolean;
+                  sort_order: number;
+                }>;
+              }>
+            }
+          />
+        </CardContent>
+      </Card>
 
       {/* Photos section — always show when there are photos, show uploader if canUpload */}
       {(canUpload || photos.length > 0) && tenantId && (

@@ -111,6 +111,46 @@ export function QuickJobForm({ services, customers }: QuickJobFormProps) {
 
       const jobId = (jobResult as { data: { id: string } }).data.id;
 
+      // Seed per-job checklist from selected services + service subtasks
+      const checklistEntries = await Promise.all(
+        selectedSvcObjects.map(async (s, i) => {
+          const row = await createItem({
+            resource: "job_service_checks",
+            values: {
+              job_id: jobId,
+              tenant_id: tenantId,
+              service_id: s.id,
+              service_label: s.label,
+              sort_order: i,
+              is_completed: false,
+            },
+            successNotification: false,
+          });
+          return {
+            service: s,
+            checkId: (row as { data: { id: string } }).data.id,
+          };
+        })
+      );
+
+      await Promise.all(
+        checklistEntries.flatMap(({ service, checkId }) =>
+          (service.subtasks ?? []).map((subtask, idx) =>
+            createItem({
+              resource: "job_service_subtask_checks",
+              values: {
+                job_service_check_id: checkId,
+                tenant_id: tenantId,
+                subtask_label: subtask,
+                sort_order: idx,
+                is_completed: false,
+              },
+              successNotification: false,
+            })
+          )
+        )
+      );
+
       // Create a draft invoice with service line items
       const { subtotal, taxAmount, total } = selectedSvcObjects.reduce(
         (acc, s) => {
