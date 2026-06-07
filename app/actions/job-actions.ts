@@ -1,7 +1,8 @@
 "use server";
 
-import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { createServerSupabaseClient, createServiceRoleClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { eventBus } from "@/lib/event-bus";
 import type { JobStatus } from "@/types";
 
 export async function updateJobStatus(jobId: string, status: JobStatus) {
@@ -16,4 +17,38 @@ export async function updateJobStatus(jobId: string, status: JobStatus) {
 
   revalidatePath(`/jobs/${jobId}`);
   revalidatePath("/jobs");
+
+  // Emit enriched completion event so the email agent can pick it up
+  if (status === "completed") {
+    // Use service role to fetch details RLS might block in server action context
+    const admin = createServiceRoleClient();
+    const { data: job } = await admin
+      .from("jobs")
+      .select("title, tenant_id, customers(email, name), job_photos(storage_path)")
+      .eq("id", jobId)
+      .single();
+
+    if (job) {
+      const customer = job.customers as { email: string | null; name: string } | null;
+      const photoPaths = (job.job_photos as { storage_path: string }[] | null) ?? [];
+
+      // Generate 7-day signed URLs for email embedding
+      const photoUrls: string[] = [];
+      for (const p of photoPaths) {
+        const { data } = await admin.storage
+          .from("job-photos")
+          .createSignedUrl(p.storage_path, 60 * 60 * 24 * 7);
+        if (data?.signedUrl) photoUrls.push(data.signedUrl);
+      }
+
+      eventBus.emit("job.completed", {
+        tenantId: job.tenant_id as string,
+        jobId,
+        jobTitle: job.title as string,
+        customerEmail: customer?.email ?? null,
+        customerName: customer?.name ?? "Customer",
+        photoUrls,
+      });
+    }
+  }
 }

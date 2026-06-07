@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge, statusToBadgeVariant } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { JobStatusActions } from "@/components/jobs/job-status-actions";
+import { JobPhotoGallery } from "@/components/jobs/job-photo-gallery";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { formatDate } from "@/lib/utils";
@@ -24,13 +25,47 @@ export default async function JobDetailPage({ params }: Props) {
   const { id } = await params;
   const supabase = await createServerSupabaseClient();
 
-  const { data: job } = await supabase
-    .from("jobs")
-    .select("*, customers(*), assigned_profile:profiles!assigned_to(full_name)")
-    .eq("id", id)
-    .single();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("tenant_id, role")
+    .eq("id", user!.id)
+    .maybeSingle();
+
+  const tenantId = profile?.tenant_id as string | undefined;
+
+  const [{ data: job }, { data: photoRows }] = await Promise.all([
+    supabase
+      .from("jobs")
+      .select("*, customers(*), assigned_profile:profiles!assigned_to(full_name)")
+      .eq("id", id)
+      .single(),
+    tenantId
+      ? supabase
+          .from("job_photos")
+          .select("id, storage_path, file_name, caption, taken_at")
+          .eq("job_id", id)
+          .order("taken_at", { ascending: false })
+      : Promise.resolve({ data: [] }),
+  ]);
 
   if (!job) notFound();
+
+  // Generate signed URLs for all photos (1-hour expiry)
+  const photos = await Promise.all(
+    (photoRows ?? []).map(async (row) => {
+      const { data: signed } = await supabase.storage
+        .from("job-photos")
+        .createSignedUrl(row.storage_path, 3600);
+      return { ...row, url: signed?.signedUrl ?? "" };
+    })
+  );
+
+  const canUpload =
+    ["in_progress", "completed", "scheduled"].includes(job.status) &&
+    ["owner", "admin", "technician"].includes(profile?.role ?? "");
 
   return (
     <div className="space-y-6">
@@ -114,6 +149,30 @@ export default async function JobDetailPage({ params }: Props) {
           </Card>
         )}
       </div>
+
+      {/* Photos section — always show when there are photos, show uploader if canUpload */}
+      {(canUpload || photos.length > 0) && tenantId && (
+        <Card>
+          <CardHeader>
+            <CardTitle>
+              Photos
+              {photos.length > 0 && (
+                <span className="ml-2 text-sm font-normal text-muted-foreground">
+                  ({photos.length})
+                </span>
+              )}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <JobPhotoGallery
+              jobId={id}
+              tenantId={tenantId}
+              initialPhotos={photos}
+              canUpload={canUpload}
+            />
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

@@ -8,7 +8,14 @@ export type AppEventMap = {
   "invoice.overdue": { tenantId: string; invoiceId: string; daysOverdue: number };
   // Job events
   "job.created": { tenantId: string; jobId: string };
-  "job.completed": { tenantId: string; jobId: string };
+  "job.completed": {
+    tenantId: string;
+    jobId: string;
+    jobTitle: string;
+    customerEmail: string | null;
+    customerName: string;
+    photoUrls: string[]; // long-lived signed URLs (7 days) for email embedding
+  };
   // Payment events
   "payment.received": { tenantId: string; paymentId: string; invoiceId: string; amount: number };
   "payment.failed": { tenantId: string; paymentId: string; reason: string };
