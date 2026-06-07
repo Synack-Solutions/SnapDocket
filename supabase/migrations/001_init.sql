@@ -167,7 +167,7 @@ create index payments_invoice_idx on public.payments(invoice_id);
 -- AUDIT LOGS
 -- ─────────────────────────────────────────
 create table public.audit_logs (
-  id            uuid primary key default uuid_generate_v4(),
+  id            uuid not null default uuid_generate_v4(),
   tenant_id     uuid not null references public.tenants(id) on delete cascade,
   user_id       uuid references auth.users(id) on delete set null,
   resource_type text not null,
@@ -177,7 +177,8 @@ create table public.audit_logs (
   changes       jsonb,
   ip_address    inet,
   user_agent    text,
-  created_at    timestamptz not null default now()
+  created_at    timestamptz not null default now(),
+  primary key (id, created_at)
 ) partition by range (created_at);
 
 -- Default partition — add monthly partitions as needed
