@@ -15,7 +15,7 @@
     "migrate:local": "supabase db reset",
     "seed": "supabase db seed",
     "type-check": "tsc --noEmit",
-    "prepare": "husky install"
+    "prepare": "husky"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",

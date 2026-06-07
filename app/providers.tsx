@@ -2,6 +2,7 @@
 
 import { Refine } from "@refinedev/core";
 import { RefineKbar, RefineKbarProvider } from "@refinedev/kbar";
+import { Suspense } from "react";
 import routerProvider from "@refinedev/nextjs-router";
 import { authProvider } from "@/lib/auth/auth-provider";
 import { getDataProvider } from "@/lib/data-provider";
@@ -54,7 +55,9 @@ export function Providers({ children }: ProvidersProps) {
         }}
       >
         {children}
-        <RefineKbar />
+        <Suspense>
+          <RefineKbar />
+        </Suspense>
       </Refine>
     </RefineKbarProvider>
   );
