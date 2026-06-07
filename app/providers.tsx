@@ -52,6 +52,7 @@ export function Providers({ children }: ProvidersProps) {
         options={{
           syncWithLocation: true,
           warnWhenUnsavedChanges: true,
+          disableTelemetry: true,
         }}
       >
         {children}
