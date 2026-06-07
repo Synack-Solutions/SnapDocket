@@ -169,7 +169,13 @@ export default async function DashboardPage() {
             ) : (
               <ul className="divide-y divide-border">
                 {recentJobs.map((job) => {
-                  const customer = job.customers as { name: string } | null;
+                  const customersRaw = job.customers as
+                    | { name: string }[]
+                    | { name: string }
+                    | null;
+                  const customer = Array.isArray(customersRaw)
+                    ? (customersRaw[0] ?? null)
+                    : customersRaw;
                   return (
                     <li key={job.id}>
                       <Link

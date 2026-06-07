@@ -16,11 +16,6 @@ interface QuickJobFormProps {
   customers: Array<Pick<Customer, "id" | "name" | "phone">>;
 }
 
-interface LastJobData {
-  selectedServiceIds: string[];
-  title: string;
-}
-
 export function QuickJobForm({ services, customers }: QuickJobFormProps) {
   const router = useRouter();
   const searchParams = useSearchParams();

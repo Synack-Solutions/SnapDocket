@@ -25,11 +25,6 @@ export function ServicesForm({ initial }: Props) {
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
-  const openNew = () => {
-    setEditing(null);
-    setForm(EMPTY_FORM);
-  };
-
   const openEdit = (s: ServiceOption) => {
     setEditing(s);
     setForm({

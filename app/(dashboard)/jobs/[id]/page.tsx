@@ -59,6 +59,14 @@ export default async function JobDetailPage({ params }: Props) {
 
   if (!job) notFound();
 
+  type CustomerShape = { name?: string; phone?: string | null; email?: string | null };
+  const customer = (
+    Array.isArray(job.customers) ? job.customers[0] : job.customers
+  ) as CustomerShape | null;
+  const assignedProfile = (
+    Array.isArray(job.assigned_profile) ? job.assigned_profile[0] : job.assigned_profile
+  ) as { full_name?: string } | null;
+
   // Generate signed URLs for all photos (1-hour expiry)
   const photos = await Promise.all(
     (photoRows ?? []).map(async (row) => {
@@ -86,8 +94,8 @@ export default async function JobDetailPage({ params }: Props) {
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
-          {(job.customers as { phone?: string | null })?.phone && (
-            <a href={`tel:${(job.customers as { phone: string }).phone}`}>
+          {customer?.phone && (
+            <a href={`tel:${customer.phone}`}>
               <Button size="sm" variant="outline">
                 📞 Call
               </Button>
@@ -142,28 +150,25 @@ export default async function JobDetailPage({ params }: Props) {
             <p>
               <span className="text-muted-foreground">Customer:</span>{" "}
               <Link href={`/customers/${job.customer_id}`} className="hover:underline font-medium">
-                {(job.customers as { name: string })?.name}
+                {customer?.name}
               </Link>
             </p>
-            {(job.customers as { phone?: string | null })?.phone && (
+            {customer?.phone && (
               <p>
                 <span className="text-muted-foreground">Phone:</span>{" "}
                 <a
-                  href={`tel:${(job.customers as { phone: string }).phone}`}
+                  href={`tel:${customer.phone}`}
                   className="font-medium text-accent hover:underline"
                 >
-                  {(job.customers as { phone: string }).phone}
+                  {customer.phone}
                 </a>
               </p>
             )}
-            {(job.customers as { email?: string | null })?.email && (
+            {customer?.email && (
               <p>
                 <span className="text-muted-foreground">Email:</span>{" "}
-                <a
-                  href={`mailto:${(job.customers as { email: string }).email}`}
-                  className="hover:underline truncate"
-                >
-                  {(job.customers as { email: string }).email}
+                <a href={`mailto:${customer.email}`} className="hover:underline truncate">
+                  {customer.email}
                 </a>
               </p>
             )}
@@ -200,10 +205,10 @@ export default async function JobDetailPage({ params }: Props) {
                 </a>
               </p>
             )}
-            {(job.assigned_profile as { full_name?: string } | null)?.full_name && (
+            {assignedProfile?.full_name && (
               <p>
                 <span className="text-muted-foreground">Assigned to:</span>{" "}
-                {(job.assigned_profile as { full_name: string }).full_name}
+                {assignedProfile.full_name}
               </p>
             )}
           </CardContent>

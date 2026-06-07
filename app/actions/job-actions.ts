@@ -29,7 +29,11 @@ export async function updateJobStatus(jobId: string, status: JobStatus) {
       .single();
 
     if (job) {
-      const customer = job.customers as { email: string | null; name: string } | null;
+      const customersRaw = job.customers as
+        | { email: string | null; name: string }[]
+        | { email: string | null; name: string }
+        | null;
+      const customer = Array.isArray(customersRaw) ? (customersRaw[0] ?? null) : customersRaw;
       const photoPaths = (job.job_photos as { storage_path: string }[] | null) ?? [];
 
       // Generate 7-day signed URLs for email embedding

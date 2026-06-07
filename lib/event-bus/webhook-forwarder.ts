@@ -21,6 +21,7 @@ export function registerWebhookForwarder(config: WebhookConfig): () => void {
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     eventBus.on(event, handler as any);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     handlers.push(() => eventBus.off(event, handler as any));
   }
 

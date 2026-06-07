@@ -31,8 +31,6 @@ export function ClientTable<T extends object>({
     getRowModel,
     refineCore: {
       tableQueryResult: { isLoading },
-      current,
-      setCurrent,
       pageCount,
     },
     getCanPreviousPage,
