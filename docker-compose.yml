@@ -1,0 +1,50 @@
+version: "3.8"
+
+# Local Supabase stack — alternative to `supabase start` CLI
+# This mirrors the services the Supabase CLI starts locally.
+# Prefer `supabase start` for the easiest local dev experience.
+
+services:
+  db:
+    image: supabase/postgres:15.1.0.117
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    volumes:
+      - db-data:/var/lib/postgresql/data
+      - ./supabase/migrations:/docker-entrypoint-initdb.d
+
+  studio:
+    image: supabase/studio:20240326-5e5586d
+    restart: unless-stopped
+    ports:
+      - "54323:3000"
+    environment:
+      SUPABASE_URL: http://kong:8000
+      STUDIO_PG_META_URL: http://meta:8080
+
+  kong:
+    image: kong:2.8.1
+    restart: unless-stopped
+    ports:
+      - "54321:8000"
+      - "54322:8001"
+    environment:
+      KONG_DATABASE: "off"
+      KONG_DECLARATIVE_CONFIG: /etc/kong/kong.yml
+
+  auth:
+    image: supabase/gotrue:v2.151.0
+    restart: unless-stopped
+    environment:
+      GOTRUE_SITE_URL: http://localhost:3000
+      GOTRUE_JWT_SECRET: super-secret-jwt-token-with-at-least-32-characters-long
+      GOTRUE_DB_DRIVER: postgres
+      DB_NAMESPACE: auth
+      DATABASE_URL: postgres://supabase_auth_admin:postgres@db:5432/postgres
+
+volumes:
+  db-data:
