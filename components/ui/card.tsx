@@ -17,17 +17,22 @@ export function Card({ className, ...props }: CardProps) {
 }
 
 export function CardHeader({ className, ...props }: CardHeaderProps) {
-  return <div className={cn("flex flex-col gap-1.5 p-4 md:p-6", className)} {...props} />;
+  return <div className={cn("flex flex-col gap-1 px-5 pt-5", className)} {...props} />;
 }
 
 export function CardTitle({ className, ...props }: CardTitleProps) {
-  return <h3 className={cn("text-lg font-semibold leading-none", className)} {...props} />;
+  return (
+    <h3
+      className={cn("text-base font-semibold leading-none text-foreground", className)}
+      {...props}
+    />
+  );
 }
 
 export function CardContent({ className, ...props }: CardContentProps) {
-  return <div className={cn("p-4 pt-0 md:p-6 md:pt-0", className)} {...props} />;
+  return <div className={cn("px-5 pb-5 pt-3", className)} {...props} />;
 }
 
 export function CardFooter({ className, ...props }: CardFooterProps) {
-  return <div className={cn("flex items-center p-4 pt-0 md:p-6 md:pt-0", className)} {...props} />;
+  return <div className={cn("flex items-center px-5 pb-5 pt-0", className)} {...props} />;
 }

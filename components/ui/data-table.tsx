@@ -31,15 +31,20 @@ export function DataTable<T extends { id?: string }>({
 }: DataTableProps<T>) {
   const router = useRouter();
   return (
-    <div className={cn("w-full overflow-x-auto rounded-lg border border-border", className)}>
+    <div
+      className={cn(
+        "w-full overflow-hidden rounded-lg border border-border bg-background shadow-sm",
+        className
+      )}
+    >
       <table className="w-full text-sm">
         <thead>
-          <tr className="border-b border-border bg-muted/50">
+          <tr className="border-b border-border bg-muted/40">
             {columns.map((col) => (
               <th
                 key={String(col.key)}
                 className={cn(
-                  "px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-muted-foreground",
+                  "px-4 py-2.5 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground",
                   col.className
                 )}
               >
@@ -51,7 +56,7 @@ export function DataTable<T extends { id?: string }>({
         <tbody>
           {isLoading ? (
             Array.from({ length: 5 }).map((_, i) => (
-              <tr key={i} className="border-b border-border">
+              <tr key={i} className="border-b border-border last:border-0">
                 {columns.map((col) => (
                   <td key={String(col.key)} className="px-4 py-3">
                     <div className="h-4 animate-pulse rounded bg-muted" />
@@ -61,7 +66,10 @@ export function DataTable<T extends { id?: string }>({
             ))
           ) : data.length === 0 ? (
             <tr>
-              <td colSpan={columns.length} className="px-4 py-8 text-center text-muted-foreground">
+              <td
+                colSpan={columns.length}
+                className="px-4 py-12 text-center text-sm text-muted-foreground"
+              >
                 {emptyMessage}
               </td>
             </tr>
@@ -72,11 +80,14 @@ export function DataTable<T extends { id?: string }>({
                 onClick={() => rowHref && row.id && router.push(`${rowHref}/${row.id}`)}
                 className={cn(
                   "border-b border-border transition-colors last:border-0",
-                  rowHref && "cursor-pointer hover:bg-muted/50"
+                  rowHref && "cursor-pointer hover:bg-muted/30"
                 )}
               >
                 {columns.map((col) => (
-                  <td key={String(col.key)} className={cn("px-4 py-3", col.className)}>
+                  <td
+                    key={String(col.key)}
+                    className={cn("px-4 py-3 text-foreground", col.className)}
+                  >
                     {col.cell
                       ? col.cell(row)
                       : String((row as Record<string, unknown>)[String(col.key)] ?? "")}

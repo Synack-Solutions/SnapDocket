@@ -33,13 +33,17 @@ export default function LoginPage() {
   };
 
   return (
-    <Card className="w-full max-w-sm">
-      <CardHeader className="text-center">
-        <span className="mb-2 block text-2xl font-bold text-primary">SnapDocket</span>
-        <CardTitle>Sign in to your account</CardTitle>
+    <Card>
+      <CardHeader className="pb-4">
+        <span className="mb-3 block text-xl font-bold tracking-tight text-foreground">
+          SnapDocket
+        </span>
+        <CardTitle className="text-base font-medium text-muted-foreground">
+          Sign in to your account
+        </CardTitle>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleLogin} className="space-y-4">
+        <form onSubmit={handleLogin} className="space-y-3">
           <Input
             label="Email address"
             type="email"
@@ -58,7 +62,10 @@ export default function LoginPage() {
           />
 
           {error && (
-            <p role="alert" className="text-sm text-destructive">
+            <p
+              role="alert"
+              className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive"
+            >
               {error}
             </p>
           )}
@@ -67,8 +74,6 @@ export default function LoginPage() {
             Sign in
           </Button>
         </form>
-
-        {/* TODO: Add forgot password and social login options via plugins/auth */}
       </CardContent>
     </Card>
   );

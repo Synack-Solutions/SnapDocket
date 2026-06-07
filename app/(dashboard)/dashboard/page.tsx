@@ -53,32 +53,42 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Dashboard</h1>
+      <div>
+        <h1 className="text-xl font-semibold text-foreground">Dashboard</h1>
+        <p className="text-sm text-muted-foreground">Your business at a glance</p>
+      </div>
 
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-        <StatCard title="Customers" value={String(customersResult.count ?? 0)} />
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+        <StatCard title="Total Customers" value={String(customersResult.count ?? 0)} />
         <StatCard title="Active Jobs" value={String(jobsResult.count ?? 0)} />
         <StatCard title="Outstanding" value={formatCurrency(totalOutstanding)} />
         <StatCard title="This Month" value={formatCurrency(monthlyRevenue)} />
       </div>
 
-      {/* TODO: Add charts (recharts / chart.js) for revenue trend and job pipeline */}
       <Card>
         <CardHeader>
-          <CardTitle>Recent Activity</CardTitle>
+          <CardTitle className="text-base">Recent Activity</CardTitle>
         </CardHeader>
         <CardContent>
           {activities.length === 0 ? (
             <p className="text-sm text-muted-foreground">No activity recorded yet.</p>
           ) : (
-            <ul className="space-y-3">
+            <ul className="divide-y divide-border">
               {activities.map((entry) => (
-                <li key={entry.id} className="flex items-start justify-between gap-4 text-sm">
-                  <span>
-                    <span className="capitalize font-medium">{entry.resource_type}</span>{" "}
-                    <span className="text-muted-foreground">{entry.action}</span>
-                  </span>
-                  <span className="shrink-0 text-xs text-muted-foreground">
+                <li
+                  key={entry.id}
+                  className="flex items-center justify-between gap-4 py-2.5 text-sm"
+                >
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <span className="h-1.5 w-1.5 rounded-full bg-accent flex-shrink-0" />
+                    <span>
+                      <span className="capitalize font-medium text-foreground">
+                        {entry.resource_type}
+                      </span>
+                      <span className="text-muted-foreground"> {entry.action}</span>
+                    </span>
+                  </div>
+                  <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
                     {formatDateTime(entry.created_at)}
                   </span>
                 </li>
@@ -93,13 +103,9 @@ export default async function DashboardPage() {
 
 function StatCard({ title, value }: { title: string; value: string }) {
   return (
-    <Card>
-      <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <p className="text-2xl font-bold">{value}</p>
-      </CardContent>
+    <Card className="p-4">
+      <p className="text-xs font-medium text-muted-foreground">{title}</p>
+      <p className="mt-1.5 text-2xl font-bold tracking-tight text-foreground">{value}</p>
     </Card>
   );
 }
