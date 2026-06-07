@@ -5,35 +5,38 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = { title: "Quick Job" };
 
-// Default service catalogue — tenants override this in their settings (services array)
-const DEFAULT_SERVICES: ServiceOption[] = [
-  { id: "ext-wash", label: "Exterior Wash", unitPrice: 30, category: "core" },
-  { id: "int-clean", label: "Interior Clean", unitPrice: 40, category: "core" },
-  { id: "full-detail", label: "Full Detail", unitPrice: 120, category: "core" },
-  { id: "wax-polish", label: "Wax & Polish", unitPrice: 60, category: "addon" },
-  { id: "engine-bay", label: "Engine Bay Clean", unitPrice: 45, category: "addon" },
-  { id: "odour-treat", label: "Odour Treatment", unitPrice: 25, category: "addon" },
-  { id: "headlight", label: "Headlight Restore", unitPrice: 35, category: "addon" },
-  { id: "leather-cond", label: "Leather Condition", unitPrice: 30, category: "addon" },
-  { id: "paint-seal", label: "Paint Sealant", unitPrice: 50, category: "addon" },
-];
-
 export default async function QuickJobPage() {
   const supabase = await createServerSupabaseClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const [profileResult, customersResult] = await Promise.all([
-    supabase.from("profiles").select("tenant_id, tenants(settings)").eq("id", user!.id).single(),
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("tenant_id")
+    .eq("id", user!.id)
+    .maybeSingle();
+
+  const [servicesResult, customersResult] = await Promise.all([
+    profile?.tenant_id
+      ? supabase
+          .from("services")
+          .select("id, label, description, unit_price, category")
+          .eq("tenant_id", profile.tenant_id)
+          .eq("is_active", true)
+          .order("sort_order")
+          .order("created_at")
+      : Promise.resolve({ data: [] }),
     supabase.from("customers").select("id, name, phone").eq("status", "active").order("name"),
   ]);
 
-  // Allow tenants to define their own services via settings.services
-  const tenantSettings = (
-    profileResult.data?.tenants as { settings?: { services?: ServiceOption[] } } | null
-  )?.settings;
-  const services = tenantSettings?.services ?? DEFAULT_SERVICES;
+  const services: ServiceOption[] = (servicesResult.data ?? []).map((s) => ({
+    id: s.id,
+    label: s.label,
+    description: (s as { description?: string }).description ?? undefined,
+    unitPrice: Number(s.unit_price),
+    category: (s as { category: string }).category as "core" | "addon",
+  }));
 
   return (
     <div className="mx-auto max-w-lg space-y-4 pb-24">

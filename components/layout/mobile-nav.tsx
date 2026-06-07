@@ -11,6 +11,8 @@ const navItems = [
   { href: "/jobs", label: "Jobs", icon: "🔧" },
   { href: "/invoices", label: "Invoices", icon: "📄" },
   { href: "/payments", label: "Payments", icon: "💳" },
+  { href: "/services", label: "Services", icon: "🏷️" },
+  { href: "/team", label: "Team", icon: "🫂" },
 ];
 
 // Bottom tab bar for mobile — fixed at bottom of screen
@@ -105,21 +107,6 @@ export function MobileMenuDrawer() {
                   </Link>
                 );
               })}
-              <div className="mt-2 border-t border-white/10 pt-2">
-                <Link
-                  href="/settings/services"
-                  onClick={() => setOpen(false)}
-                  className={cn(
-                    "flex items-center gap-3 rounded px-3 py-2 text-sm font-medium",
-                    pathname.startsWith("/settings")
-                      ? "bg-accent text-white"
-                      : "text-white/60 hover:bg-white/8 hover:text-white"
-                  )}
-                >
-                  <span aria-hidden="true">⚙️</span>
-                  Settings
-                </Link>
-              </div>
             </div>
           </nav>
         </div>

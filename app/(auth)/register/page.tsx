@@ -8,20 +8,32 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-export default function LoginPage() {
+export default function RegisterPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [companyName, setCompanyName] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (password.length < 8) {
+      setError("Password must be at least 8 characters");
+      return;
+    }
     setLoading(true);
     setError(null);
 
     const supabase = createClient();
-    const { error: authError } = await supabase.auth.signInWithPassword({ email, password });
+    const { error: authError } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: { company_name: companyName.trim() || undefined },
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
+      },
+    });
 
     if (authError) {
       setError(authError.message);
@@ -29,6 +41,7 @@ export default function LoginPage() {
       return;
     }
 
+    // Profile + tenant are created by the DB trigger on auth.users insert
     router.push("/dashboard");
     router.refresh();
   };
@@ -40,11 +53,19 @@ export default function LoginPage() {
           SnapDocket
         </span>
         <CardTitle className="text-base font-medium text-muted-foreground">
-          Sign in to your account
+          Create your account
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleLogin} className="space-y-3">
+        <form onSubmit={handleRegister} className="space-y-3">
+          <Input
+            label="Company name (optional)"
+            type="text"
+            autoComplete="organization"
+            value={companyName}
+            onChange={(e) => setCompanyName(e.target.value)}
+            placeholder="Acme Trades"
+          />
           <Input
             label="Email address"
             type="email"
@@ -56,7 +77,7 @@ export default function LoginPage() {
           <Input
             label="Password"
             type="password"
-            autoComplete="current-password"
+            autoComplete="new-password"
             required
             value={password}
             onChange={(e) => setPassword(e.target.value)}
@@ -72,13 +93,13 @@ export default function LoginPage() {
           )}
 
           <Button type="submit" className="w-full" loading={loading}>
-            Sign in
+            Create account
           </Button>
 
           <p className="text-center text-xs text-muted-foreground">
-            New to SnapDocket?{" "}
-            <Link href="/register" className="text-accent underline-offset-2 hover:underline">
-              Create account
+            Already have an account?{" "}
+            <Link href="/login" className="text-accent underline-offset-2 hover:underline">
+              Sign in
             </Link>
           </p>
         </form>
